@@ -1,0 +1,34 @@
+appId: com.pcm.messenger
+productName: PCM
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: public
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+  - node_modules/**/*
+
+extraMetadata:
+  main: dist-electron/main.cjs
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: public/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: PCM
+  uninstallDisplayName: PCM Messenger
+
+asar: true

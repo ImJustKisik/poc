@@ -1,0 +1,31 @@
+{
+  "name": "pcm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal Crypto Messenger - E2E encrypted desktop messenger",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:client": "npm run dev -w client",
+    "dev:alice": "npx cross-env PCM_PROFILE=alice npm run dev:client",
+    "dev:bob": "npx cross-env PCM_PROFILE=bob npm run dev:client",
+    "dev:all": "npx concurrently -n \"server,alice\" -c \"magenta,cyan\" \"npm run dev:server\" \"npm run dev:alice\"",
+    "dev:3": "npx concurrently -n \"server,alice,bob\" -c \"magenta,cyan,yellow\" \"npm run dev:server\" \"npm run dev:alice\" \"npm run dev:bob\"",
+    "typecheck:shared": "npm run build -w shared",
+    "typecheck:server": "npx tsc -p server/tsconfig.json --noEmit",
+    "typecheck:client": "npx tsc -p client/tsconfig.json --noEmit",
+    "typecheck": "npm run typecheck:shared && npm run typecheck:server && npm run typecheck:client",
+    "build:shared": "npm run build -w shared",
+    "build:server": "npm run build -w server",
+    "build:client": "npm run build -w client",
+    "build": "npm run build:shared && npm run typecheck:server && npm run typecheck:client && npm run build:server && npm run build:client",
+    "rebuild": "npm install && npm run build"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

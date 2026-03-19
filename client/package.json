@@ -1,0 +1,51 @@
+{
+  "name": "pcm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PCM — Personal Crypto Messenger with E2E encryption",
+  "author": "PCM Team",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/Dev-Desktop.ps1",
+    "dev:web": "vite",
+    "dev:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/Stop-Desktop.ps1",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:web": "vite build",
+    "build": "npm run typecheck && npm run build:web",
+    "preview": "vite preview",
+    "electron:dev": "vite",
+    "electron:build": "npm run build && electron-builder --win --x64",
+    "electron:portable": "npm run build && electron-builder --win portable",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pcm/shared": "*",
+    "date-fns": "^4.1.0",
+    "mediasoup-client": "^3.18.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "simple-peer": "^9.11.1",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "uuid": "^11.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/simple-peer": "^9.11.0",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^9.1.0",
+    "electron": "33.4.11",
+    "electron-builder": "^25.1.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.1.0",
+    "vite-plugin-electron": "^0.28.0",
+    "vite-plugin-electron-renderer": "^0.14.0",
+    "vitest": "^3.0.0",
+    "wait-on": "^8.0.0"
+  }
+}

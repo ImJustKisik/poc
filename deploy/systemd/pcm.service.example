@@ -1,0 +1,16 @@
+[Unit]
+Description=PCM Server
+After=network.target
+
+[Service]
+Type=simple
+User=pcm
+Group=pcm
+WorkingDirectory=/opt/pcm/server
+EnvironmentFile=/etc/pcm/server.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
