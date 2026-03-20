@@ -2,6 +2,11 @@ appId: com.pcm.messenger
 productName: PCM
 copyright: Copyright © 2026
 
+publish:
+  - provider: github
+    owner: ImJustKisik
+    repo: poc
+
 directories:
   output: release
   buildResources: public

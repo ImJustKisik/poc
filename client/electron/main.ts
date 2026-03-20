@@ -10,6 +10,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { join } from 'path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import pkg from 'electron-updater';
+const { autoUpdater } = pkg;
 
 const { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage, safeStorage } = electron;
 
@@ -119,6 +121,10 @@ ipcMain.handle('app:getDataPath', async () => USER_DATA_DIR);
 app.whenReady().then(() => {
   createWindow();
   createTray();
+
+  autoUpdater.checkForUpdatesAndNotify().catch(err => {
+    console.error('[AutoUpdate Error]:', err);
+  });
 });
 
 app.on('window-all-closed', () => {

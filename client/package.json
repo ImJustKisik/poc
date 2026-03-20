@@ -22,6 +22,7 @@
   "dependencies": {
     "@pcm/shared": "*",
     "date-fns": "^4.1.0",
+    "electron-updater": "^6.8.3",
     "mediasoup-client": "^3.18.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
