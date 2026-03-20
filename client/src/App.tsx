@@ -850,6 +850,104 @@ function MessageInput({ conversationId }: { conversationId: string }) {
   const setReplyingTo = useUIStore(s => s.setReplyingTo);
   const showEmojiPanel = useUIStore(s => s.showEmojiPanel);
   const setShowEmojiPanel = useUIStore(s => s.setShowEmojiPanel);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File is too large! Please choose an image under 2MB.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const base64Url = evt.target?.result as string;
+      if (!base64Url || !userId) return;
+
+      const ws = getWSService();
+      if (!ws) return;
+
+      const conv = useConversationsStore.getState().conversations.find(c => c.id === conversationId);
+      if (!conv) return;
+
+      try {
+        const recipientId = conv.members.find(m => m !== userId);
+        if (!recipientId) return;
+        const messageId = uuid();
+
+        let session = useSessionStore.getState().sessions[conversationId];
+        let x3dhEphemeralKey: Uint8Array | undefined;
+        
+        if (!session) {
+          const bundle = await ws.requestKeyBundle(recipientId);
+          if (!bundle || !bundle.signedPreKey) throw new Error('Recipient has no signed pre-key.');
+
+          const mySecretKeyB64 = useAuthStore.getState().secretKey;
+          if (!mySecretKeyB64) throw new Error('Missing secret key');
+          
+          const mySecretKey = naclUtil.decodeBase64(mySecretKeyB64);
+          const { sharedSecret, ephemeralKeyPair, oneTimePreKeyId } = x3dhInitiate(mySecretKey, bundle);
+          x3dhEphemeralKey = ephemeralKeyPair.publicKey;
+          
+          session = DoubleRatchetSession.initAsAlice(sharedSecret, naclUtil.decodeBase64(bundle.signedPreKey.publicKey));
+          useSessionStore.getState().setSession(conversationId, session);
+          
+          const encrypted = session.encrypt(base64Url, x3dhEphemeralKey, oneTimePreKeyId);
+          ws.sendMessage({
+            id: messageId,
+            conversationId,
+            recipientIds: [recipientId],
+            encryptedPayloads: { [recipientId]: encrypted as any },
+            messageType: MessageType.IMAGE,
+            timestamp: Date.now(),
+          });
+          
+          const msg: DecryptedMessage = {
+            id: messageId,
+            conversationId,
+            senderId: userId,
+            type: MessageType.IMAGE,
+            media: { thumbnailUrl: base64Url } as any,
+            status: MessageStatus.SENT,
+            timestamp: Date.now(),
+          };
+          addMessage(conversationId, msg);
+          updateLastMessage(conversationId, msg);
+          return;
+        }
+
+        const encrypted = session.encrypt(base64Url, x3dhEphemeralKey);
+        ws.sendMessage({
+          id: messageId,
+          conversationId,
+          recipientIds: [recipientId],
+          encryptedPayloads: { [recipientId]: encrypted as any },
+          messageType: MessageType.IMAGE,
+          timestamp: Date.now(),
+        });
+
+        const msg: DecryptedMessage = {
+          id: messageId,
+          conversationId,
+          senderId: userId,
+          type: MessageType.IMAGE,
+          media: { thumbnailUrl: base64Url } as any,
+          status: MessageStatus.SENT,
+          timestamp: Date.now(),
+        };
+        addMessage(conversationId, msg);
+        updateLastMessage(conversationId, msg);
+      } catch (err) {
+        console.error('[Send Image] Failed:', err);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; 
+  };
+
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
@@ -1024,7 +1122,14 @@ function MessageInput({ conversationId }: { conversationId: string }) {
             onKeyDown={handleKeyDown}
             rows={1}
           />
-          <button className="message-input__btn" title="Attach file">
+          <input 
+            type="file" 
+            accept="image/*" 
+            style={{ display: 'none' }} 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+          />
+          <button className="message-input__btn" title="Attach file" onClick={() => fileInputRef.current?.click()}>
             {Icons.attach}
           </button>
         </div>
@@ -1603,12 +1708,14 @@ export default function App() {
           const decryptedText = session.decrypt(content);
           console.log('[Crypto] Decrypted text:', decryptedText);
           
+          const isImage = type === MessageType.IMAGE;
           const msg: DecryptedMessage = {
             id,
             conversationId,
             senderId,
             type,
-            text: decryptedText,
+            text: isImage ? '' : decryptedText,
+            media: isImage ? { thumbnailUrl: decryptedText } as any : undefined,
             timestamp,
             status: MessageStatus.DELIVERED,
           };
